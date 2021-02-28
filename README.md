@@ -1,4 +1,5 @@
-# w209-sp2021-fp-stv
+# Distributed Trace Visualization
+#### UC-Berkeley MIDS W209 SP2021 Final Project
 
 ### Generating Zipkin Sample Data
 
