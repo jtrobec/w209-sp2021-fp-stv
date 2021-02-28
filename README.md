@@ -9,26 +9,20 @@ You will need docker and docker-compose setup.
 You will need `maven` for building `synthetic-load-generator`.
 
 1. Clone Repositories
-
 Create a directory, and clone these github repositories: 
 * https://github.com/Omnition/synthetic-load-generator
 * https://github.com/openzipkin-attic/docker-zipkin
 
 2. Start Zipkin-slim
-
 Probably any of the zipkin containers are fine, but the slim version starts up more quickly than the others. Since we are only generating synthetic traces, we do not need to have persistent storage for zipkin.
-
 ```
 cd docker-zipkin
 docker-compose -f docker-compose-slim.yml up
 ```
 
 3. Build and run the load generation tool
-
 Load generation will simulate the execution of traces in a distributed environment, based on a hypothetical service topology specified in a json format. The topology can be customized to simulate various situations that may be amenable to visualization.
-
 Assuming you used defaults for starting up zipkin-slim, here's how you would generate traces from one of the example topologies:
-
 ```
 cd synthetic-load-generator
 # only need to do the next line once
@@ -38,5 +32,4 @@ java -jar ./target/SyntheticLoadGenerator-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
 
 4. Run a script to save trace json to a directory
-
 TODO(jtrobec): we should be able to capture the output from the load generation tool, which contains trace IDs. A very simple script should be able to parse out these trace IDs, then hit the zipkin APIs to download the json into a folder.
