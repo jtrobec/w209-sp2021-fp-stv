@@ -13,7 +13,7 @@ Create a directory, and clone these github repositories:
 
 3. Start Zipkin-slim
 Probably any of the zipkin containers are fine, but the slim version starts up more quickly than the others. Since we are only generating synthetic traces, we do not need to have persistent storage for zipkin.
-```
+```bash
 cd docker-zipkin
 docker-compose -f docker-compose-slim.yml up
 ```
@@ -21,7 +21,7 @@ docker-compose -f docker-compose-slim.yml up
 4. Build and run the load generation tool
 Load generation will simulate the execution of traces in a distributed environment, based on a hypothetical service topology specified in a json format. The topology can be customized to simulate various situations that may be amenable to visualization.
 Assuming you used defaults for starting up zipkin-slim, here's how you would generate traces from one of the example topologies:
-```
+```bash
 cd synthetic-load-generator
 # only need to do the next line once
 mvn package
