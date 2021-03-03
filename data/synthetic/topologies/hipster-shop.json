@@ -45,12 +45,12 @@
       {
         "serviceName" : "productcatalogservice",
         "instances" : [ "productcatalogservice-6b654dbf57-zq8dt", "productcatalogservice-d847fdcf5-j6s2f" ],
-        "tagSets" : [{"tags": { "version" : "v52"}, "inherit":  ["region"]}],
+        "tagSets" : [{"tags": { "version" : "v53"}, "inherit":  ["region"]}],
         "routes" : [
           {
             "route" : "/GetProducts",
             "downstreamCalls" : { },
-            "maxLatencyMillis" : 100,
+            "maxLatencyMillis" : 231,
             "tagSets": [
               {"inherit": ["starter"]}
             ]
