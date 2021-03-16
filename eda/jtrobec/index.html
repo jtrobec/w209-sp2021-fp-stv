@@ -46,8 +46,32 @@
                 padding: 0;
                 margin: 0;
                 font-weight: bold;
+                font-size: 0.8em;
+            }
+
+            .legendLinear .label {
+                font-size: 0.6em;
+            }
+
+            div.traceRow{
+                display: flex;
+            }
+
+            div.traceStructDiv {
+                flex: 49%;
+            }
+            #h2 div {
+                margin-bottom: 50px;
             }
         </style>
+        <script src="https://d3js.org/d3.v6.min.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/d3-flame-graph@4.0.6/dist/d3-flamegraph.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vega"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vega-lite"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vega-lite-api"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vega-tooltip"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js" integrity="sha512-wNH6xsp2n8CfB91nrBtfc4sfLwYPBMjSWVUwQOp60AYYXH6i8yCwuKFZ4rgK2i6pQek/b+bSyR7b01/922IBzQ==" crossorigin="anonymous"></script>
+
         <div id='title'>
             <h1>Final Project Exploratory Visualization</h1>
             <h5>MIDS W209 Spring 2021</h5>
@@ -86,6 +110,7 @@
                 </ol>
             </div>
             <div class="section">
+                <h4>H1: Trace tree structure is not 100% consistent for all traces with the same root.</h4>
                 <h6>Next, investigate each of your hypotheses by visualizing relevant variables...</h6> 
                 <!-- (including derived variables, if that helps) in multiple ways. Look for correlations, clusters, outliers, or any other 
                 patterns. See if you can find evidence for or against each hypothesis. As you explore, retain multiple sheets in your workbook that show the development 
@@ -117,24 +142,58 @@
                 and maybe encode relative counts using either node size or color.
 
                 <div id='trace-tree-structure-combined'></div>
-
+                <p>
+                When I was iterating on this visualization, I would slice the number of traces that I used down to 500 instead of the full 4.5k. This allowed me to iterate more
+                quickly since it took much less time to load. After I finished this visualization, I tested with the full set, and found this surprising insight: there are actually
+                three distinct trace structures for this particular API endpoint. Based on the histograms I used earlier to see depth and count of spans, I thought there were only
+                two. But it turns out that one of the deepest nodes is sometimes missing. I didn't see this in the depth count because similar traces are just as deep, and I
+                couldn't see it in the span count histogram because the binning happened to put traces with 8 and 9 spans together. I think this is a pretty good demonstration of
+                why this visualization is a more useful way to compare the structure of the trees than plotting summary statistics.
+                </p><p>
                 I can actually shrink this window significantly, and then show all the trace structures present in the data. Many of these are not particularly interesting, since
-                they only really have one structure, but if they had more divergent structures, that would show up in the coloring of the nodes.
-
+                they only really have one structure, but if they had more divergent structures, that would show up in the coloring of the nodes. The nice thing is, because each
+                endpoint has all their traces represented in a single tree, I can get a sense of all the structures and relative counts at once.
+                </p>
                 <div id='trace-tree-structure-all'></div>
-
-                As an alternative, I wanted to try applying a flamegraph, which are somewhat popular in the performance engineering industry.
-
+                <p>
+                As an alternative, I wanted to try applying a flamegraph, which are somewhat popular in the performance engineering industry. The information is essentially the
+                same; the width of a bar represents the relative percentage of parent calls in which the child appears, divided by the number of children the parent has. This is a
+                complicated thing to articulate with words, but I believe the visual representation ends up being fairly intuitive, especially if you've seen the trace structure
+                graph first. The flame graph allows drilling in on a specific child, so if you click on a node, it expands to fill-up 100% of the width, and its children expand so
+                you can get a closer look at their relative occurrences.
+                </p>
                 <div id='trace-tree-flamegraph'></div>
+                <p>
+                Ultimately, the hypothesis that trace structures are not 100% consistent within the same endpoint is easily validated by either view. It's good to note as well that
+                the histograms I tried actually ended up misleading me about the shape of the traces, which underscores the importance of including the hierarchy as part of the
+                visualization.
+                </p>
+            </div>
+            <div class="section" id="h2">
+                <h4>H2: Total duration of a trace is only loosely correlated with the total number of children.</h4>
+                <div id='trace-durations'></div>
+                <div id='trace-durations-by-name'></div>
+                <div id='trace-duration-to-count'></div>
+                <p>
+                It's a little tough to draw a conclusion here. It seems pretty clear that the traces with more spans tend to be longer, however trace span counts are very segmented
+                by trace type. Within trace types, there is a spread of durations, even though in most cases we have the same number of spans. In this case, I feel like the visualization
+                mostly contradicts the hypothesis...it seems like there is a reasonably strong correlation between span count and trace duration.
+                </p>
+            </div>
+            <div class="section" id="h3">
+                <h4>H3: For traces with the same root service-endpoint, differences in duration will be related to differences in child duration.</h4>
+                <p>
+                For this particular hypothesis I should explain why this might not be a given. It's possible in these traces that a lot of work is executed in parallel. If that's the
+                case, then the durations of the child spans may not directly impact the duration of the trace, so it's not a guarantee that we would have a tight relationship between
+                parent duration and child span duration.
+                </p>
+                <div id="trace-duration-to-sum-of-span-duration-regression"></div>
+                <p>
+                In this case the relationship is pretty clear. Adding the regression line shows that the slope is just shy of 1:1, so we have a very strong correlation between the
+                duration of the trace and the total duration of child spans. This supports our hypothesis that the duration of child spans is a good predictor of the total trace duration.
+                </p>
             </div>
         </div>
-        <script src="https://d3js.org/d3.v6.min.js"></script>
-        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/d3-flame-graph@4.0.6/dist/d3-flamegraph.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/vega"></script>
-        <script src="https://cdn.jsdelivr.net/npm/vega-lite"></script>
-        <script src="https://cdn.jsdelivr.net/npm/vega-lite-api"></script>
-        <script src="https://cdn.jsdelivr.net/npm/vega-tooltip"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js" integrity="sha512-wNH6xsp2n8CfB91nrBtfc4sfLwYPBMjSWVUwQOp60AYYXH6i8yCwuKFZ4rgK2i6pQek/b+bSyR7b01/922IBzQ==" crossorigin="anonymous"></script>
         <script type="module">
             const getRoot = (spans) => {return spans.find(s => !(s.parentId));};
             const getSpanName = (span) => {return span.localEndpoint.serviceName + span.name;};
@@ -179,6 +238,24 @@
                 return counts;
             }
 
+            const fqnCountsToParentChild = (countForest) => Object.entries(countForest).map(([k, v]) => {
+                const lastArrow = k.lastIndexOf('->');
+                if (lastArrow >= 0) {
+                    return {
+                        fullyQualifiedName: k,
+                        shortName: k.slice(lastArrow + 2),
+                        parentFullyQualifiedName: k.slice(0, lastArrow),
+                        count: v
+                    }
+                } else {
+                    return {
+                        fullyQualifiedName: k,
+                        shortName: k,
+                        count: v
+                    };
+                }
+            });
+
             const stratifiedWithCounts = (trace) => {
                 const strat = traceStratify(trace);
                 // iterate over all nodes and init their count
@@ -213,11 +290,10 @@
                 }
             }
 
-            const structureTree = (traceHierarchy, divId, boxHeight) => {
-                const treeDiv = d3.select(`#${divId}`);
+            const structureTree = (traceHierarchy, treeDiv, boxHeight) => {
                 const width = treeDiv.node().getBoundingClientRect().width;
                 const height = boxHeight ?? (width * 0.33);
-                const margin = {top: 10, left: 10, bottom: 10, right: 10};
+                const margin = {top: 10, left: 10, bottom: 60, right: 10};
                 const inner = {width: width - margin.left - margin.right, height: height - margin.top - margin.bottom}
                 const svg = treeDiv.append("svg").attr('viewBox', [0, 0, width, height]);
                 
@@ -252,11 +328,10 @@
                                  .domain(range(0, 1+maxLevelIndex))
                                  .range([margin.top, height - margin.bottom])
                                  .paddingInner(0.05);
-                const scaleColor = d3.scaleLinear()
-                                     .domain([0, traceHierarchy.data.count])
-                                     .range(['firebrick', 'steelblue']);
+                const scaleColor = d3.scaleSequential(d3.interpolateCividis)
+                                     .domain([0, traceHierarchy.data.count]);
 
-                const boxSize = d3.min([scaleX.bandwidth(), scaleY.bandwidth()]);
+                const boxSize = d3.min([30, scaleX.bandwidth(), scaleY.bandwidth()]);
                 const target = svg.append('g')
                                   .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
@@ -267,7 +342,7 @@
 
                 target.append("g")
                       .attr("class", "legendLinear")
-                      .attr("transform", `translate(20,${inner.height - 50})`);
+                      .attr("transform", `translate(20,${height - margin.bottom})`);
 
                 const legendLinear = d3.legendColor()
                                        .title('Node Counts')
@@ -299,8 +374,8 @@
                     .attr('y', n => scaleY(n.levelIndex))
                     .attr('width', boxSize)
                     .attr('height', boxSize)
-                    .attr('rx', 10)
-                    .attr('ry', 10)
+                    .attr('rx', 5)
+                    .attr('ry', 5)
                     .attr('fill', n => scaleColor(n.data.count))
                     .on("mouseover", (e, n) => {		
                         tip.transition()		
@@ -395,6 +470,7 @@
             vl.register(vega, vegaLite, options);
 
             d3.json("./trace-files.json").then((traceList) => {
+                //let promises = traceList.map(f => d3.json(`/data/synthetic/20210302-hipster-shop/${f}`)
                 let promises = traceList.slice(0, 500).map(f => d3.json(`/data/synthetic/20210302-hipster-shop/${f}`)
                                                     .catch(function(error){
                                                         console.log(error);
@@ -475,26 +551,24 @@
                     drawTraceTree(stratified2, 'trace-tree-structure-2', 100);
 
                     const countForest = getFQNCounts(checkoutTraces);
-                    const traceStructure = countStratify(Object.entries(countForest).map(([k, v]) => {
-                        const lastArrow = k.lastIndexOf('->');
-                        if (lastArrow >= 0) {
-                            return {
-                                fullyQualifiedName: k,
-                                shortName: k.slice(lastArrow + 2),
-                                parentFullyQualifiedName: k.slice(0, lastArrow),
-                                count: v
-                            }
-                        } else {
-                            return {
-                                fullyQualifiedName: k,
-                                shortName: k,
-                                count: v
-                            };
+                    const traceStructure = countStratify(fqnCountsToParentChild(countForest));
+                    structureTree(traceStructure, d3.select('#trace-tree-structure-combined'), 250);
+
+                    const allTraceDiv = d3.select('#trace-tree-structure-all');
+                    const traceGroups = d3.group(goodTraces, t => getSpanName(getRoot(t)));
+                    let currentRow = allTraceDiv.append('div').attr('class', 'traceRow');
+                    traceGroups.forEach((traces) => {
+                        const tcounts = getFQNCounts(traces);
+                        const tstruct = countStratify(fqnCountsToParentChild(tcounts));
+                        const newDiv = currentRow.append('div')
+                                                 .attr('class', 'traceStructDiv');
+                        structureTree(tstruct, newDiv, 200);
+                        if (currentRow.node().children.length > 1) {
+                            currentRow = allTraceDiv.append('div').attr('class', 'traceRow');
                         }
-                    }));
+                    })
 
-                    structureTree(traceStructure, 'trace-tree-structure-combined', 250);
-
+                    // plot a flamegraph -- need to do some math to make it look right
                     const checkoutTraceCount = checkoutTraces.length;
                     traceStructure.each(x => {
                         x.name = x.data.shortName;
@@ -504,27 +578,106 @@
                             x.value = x.data.count;
                         }
                     });
-                    
+
                     const flameDiv = d3.select("#trace-tree-flamegraph");
                     const flameWidth = flameDiv.node().getBoundingClientRect().width;
                     const chart = flamegraph().width(flameWidth);
                     flameDiv
                       .datum(traceStructure)
                       .call(chart);
+
+                    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    // H2 code - trace duration to span count
+                    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    const traceDurations = goodTraces.map(t => {
+                        const root = getRoot(t);
+                        const notRoot = t.filter(x => x.id != root.id)
+                        return {
+                            name: getSpanName(root),
+                            duration: root.duration,
+                            spanDurationSum: d3.sum(notRoot, x => x.duration),
+                            spanDurationMean: d3.mean(notRoot, x => x.duration),
+                            spanCount: t.length
+                        }
+                    });
+                    vl.markBar({ tooltip: true })
+                        .data(traceDurations)
+                        .encode(
+                            vl.x().fieldQ("duration").bin(true),
+                            vl.y().count(),
+                            vl.tooltip([vl.fieldQ("duration"), vl.fieldN("name")])
+                        )
+                        .render()
+                        .then(viewElement => {
+                            // render returns a promise to a DOM element containing the chart
+                            // viewElement.value contains the Vega View object instance
+                            document.getElementById('trace-durations').appendChild(viewElement);
+                        });
+                    vl.markBar({ tooltip: true })
+                        .data(traceDurations)
+                        .encode(
+                            vl.x().fieldQ("duration").bin(true),
+                            vl.y().count(),
+                            vl.column().fieldN("name"),
+                            vl.tooltip([vl.fieldQ("duration"), vl.fieldN("name")])
+                        )
+                        .render()
+                        .then(viewElement => {
+                            // render returns a promise to a DOM element containing the chart
+                            // viewElement.value contains the Vega View object instance
+                            document.getElementById('trace-durations-by-name').appendChild(viewElement);
+                        });
+                    
+                    vl.markPoint({ tooltip: true })
+                        .title('Trace Duration by Count of Spans')
+                        .width(600)
+                        .height(600)
+                        .data(traceDurations)
+                        .encode(
+                            vl.y().fieldQ("duration"),
+                            vl.x().fieldQ("spanCount"),
+                            vl.color().fieldN("name"),
+                            vl.tooltip([vl.fieldQ("duration"), vl.fieldQ("spanCount"), vl.fieldN("name")])
+                        )
+                        .render()
+                        .then(viewElement => {
+                            document.getElementById('trace-duration-to-count').appendChild(viewElement);
+                        });
+
+                    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    // H3 code - trace duration to span duration
+                    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    const scatter = vl.markPoint({ tooltip: true })
+                        .title('Trace Duration by Sum of Child Span Duration')
+                        .width(300)
+                        .height(300)
+                        .data(traceDurations)
+                        .encode(
+                            vl.y().fieldQ("duration"),
+                            vl.x().fieldQ("spanDurationSum"),
+                            vl.color().fieldN("name"),
+                            vl.tooltip([vl.fieldQ("duration"), vl.fieldQ("spanDurationSum"), vl.fieldN("name")])
+                        )
+                    
+                    const regression = vl.markLine()
+                        .width(300)
+                        .height(300)
+                        .data(traceDurations)
+                        .transform(
+                            vl.regression('duration').on('spanDurationSum')
+                        )
+                        .encode(
+                            vl.y().fieldQ("duration"),
+                            vl.x().fieldQ("spanDurationSum"),
+                        );
+
+                    const layer = vl.layer(scatter, regression);
+                    vl.hconcat(scatter, layer.title("with Regression Line")).render()
+                        .then(viewElement => {
+                            document.getElementById('trace-duration-to-sum-of-span-duration-regression').appendChild(viewElement);
+                        });
                 });
             });
         </script>
-        <!--
-
-            columnions tried: 20 points
-    Experimentation with a variety of chart types: 15 points
-    Refinement within individual chart types: 15 points
-    Applying information gained in one visualization to enhance another: 10 points
-    Clear and reasonable hypotheses: 10 points
-    Reasonable conclusion for each hypothesis: 10 points
-    Describing the work in enough detail to follow it: 10 points
-    Clear and readable writing: 10 points
-
-        -->
     </body>
 </html>
