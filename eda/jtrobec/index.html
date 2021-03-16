@@ -470,8 +470,8 @@
             vl.register(vega, vegaLite, options);
 
             d3.json("./trace-files.json").then((traceList) => {
-                //let promises = traceList.map(f => d3.json(`/data/synthetic/20210302-hipster-shop/${f}`)
-                let promises = traceList.slice(0, 500).map(f => d3.json(`/data/synthetic/20210302-hipster-shop/${f}`)
+                let promises = traceList.map(f => d3.json(`/data/synthetic/20210302-hipster-shop/${f}`)
+                //let promises = traceList.slice(0, 500).map(f => d3.json(`/data/synthetic/20210302-hipster-shop/${f}`)
                                                     .catch(function(error){
                                                         console.log(error);
                                                         return [];
