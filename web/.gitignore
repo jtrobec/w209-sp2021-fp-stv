@@ -1,0 +1,12 @@
+build/
+dist/
+docs/
+node_modules/
+test/
+
+package-lock.json
+
+.cache
+.eslintcache
+.idea
+.vscode
