@@ -17,7 +17,7 @@ const getFullyQualifiedSpanName = (span, spans) => {
 
 d3.json("./trace-files.json").then((traceList) => {
     const promises = traceList.slice(0, MAX_TRACES_TO_LOAD)
-                              .map(f => d3.json(`/data/synthetic/20210302-hipster-shop/${f}`)
+                              .map(f => d3.json(`data/synthetic/20210302-hipster-shop/${f}`)
                               .catch(function(error){
                                   // some traces didn't fully load from zipkin API
                                   console.log(`Error loading trace file: ${error}`);
