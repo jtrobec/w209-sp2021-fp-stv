@@ -1,1 +1,4 @@
+altair
 Flask>=1.0
+pandas
+scipy
