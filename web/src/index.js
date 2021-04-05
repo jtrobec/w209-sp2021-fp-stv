@@ -44,7 +44,7 @@ const errorExplorer = (traceName, traces) => {
 
     embed(
         '#error-explorer',
-        'http://127.0.0.1:5000/error_chart/71e758c99341c4b5'
+        'error_chart/71e758c99341c4b5'
     ).catch(console.error);
 }
 
