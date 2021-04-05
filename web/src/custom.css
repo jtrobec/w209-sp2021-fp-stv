@@ -7,6 +7,16 @@
     text-decoration: underline;
 }
 
+#error-trace-list {
+    overflow: auto;
+    height: 700px;
+}
+
+#error-span-durations {
+    width: 875px;
+}
+
+
 div.struct-tip {	
     position: absolute;			
     text-align: center;			
@@ -33,6 +43,20 @@ div.trace_summary {
 
 div.trace_summary:hover {
     border: 5px solid firebrick;
+}
+
+.trace-select-link {
+    font-family: 'Courier New', Courier, monospace;
+    color: steelblue;
+}
+
+.trace-select-link:hover {
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.trace-select-link-selected {
+    color: firebrick;
 }
 
 .legendTitle {

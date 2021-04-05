@@ -7,6 +7,7 @@ import embed from 'vega-embed';
 import * as st from './structure_tree.js';
 import * as th from './trace_heatmap.js'
 import * as trace from './trace.js';
+import { schemeDark2 } from 'd3';
 
 const MAX_TRACES_TO_LOAD = 5000;
 
@@ -32,20 +33,77 @@ const newUi = (title) => {
     return charts;
 }
 
+const updateErrorChart = (traceId) => {
+    d3.select('#error-chart').html("");
+    d3.select('#error-span-durations').html("");
+    embed(
+        '#error-chart',
+        `error_chart/${traceId}`
+    ).catch(console.error);
+    embed(
+        '#error-span-durations',
+        `error_span_durations/${traceId}`,
+        {width: 875}
+    ).catch(console.error);
+    d3.json(`error_span_durations_summary/${traceId}`).then(data => {
+        d3.select('#error-span-durations-summary')
+          .selectAll('h6')
+          .data(data)
+          .join('h6')
+          .text(d => d);
+    });
+}
+
 const errorExplorer = (traceName, traces) => {
     const charts = newUi(`${traceName} Error Explorer`);
-        
-    charts
+    const traceIds = traces.map(t => trace.getRoot(t).id);
+
+    const crow = charts
         .append('div')
+        .attr('class', 'row');
+
+    const vizCol = crow
+        .append('div')
+        .attr('class', 'col');
+    
+    vizCol.append('div')
         .attr('class', 'row')
         .append('div')
         .attr('class', 'col')
-        .attr('id', 'error-explorer');
+        .attr('id', 'error-chart');
+    
+    vizCol.append('div')
+        .attr('class', 'row')
+        .append('div')
+        .attr('class', 'col')
+        .attr('id', 'error-span-durations-summary');
+    
+    vizCol.append('div')
+        .attr('class', 'row')
+        .append('div')
+        .attr('class', 'col')
+        .attr('id', 'error-span-durations');
 
-    embed(
-        '#error-explorer',
-        'error_chart/71e758c99341c4b5'
-    ).catch(console.error);
+    const traceNavCol = crow
+        .append('div')
+        .attr('class', 'col col-sm')
+        .attr('id', 'error-trace-list');
+
+    traceNavCol.append('ul')
+        .selectAll('li')
+        .data(traceIds)
+        .join('li')
+        .append('a')
+        .attr('class', 'trace-select-link')
+        .text(d => d)
+        .on('click', (e, i) => {
+            updateErrorChart(i);
+            // reset existing selected...
+            d3.selectAll('.trace-select-link').attr('class', 'trace-select-link');
+            d3.select(e.target).attr('class', 'trace-select-link trace-select-link-selected');
+        })
+
+    updateErrorChart(traceIds[0])
 }
 
 const traceDrillDown = (traceName, traces) => {
