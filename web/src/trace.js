@@ -16,9 +16,8 @@ export const getRoot = (spans) => {return spans.find(s => !(s.parentId));};
  */
 export const getSpanName = (span) => {return span.localEndpoint.serviceName + span.name;};
 
-export const errorTraceCount = (traces) => { return traces.map(hasError).reduce((acc, cur) => cur ? acc + 1 : acc, 0) }
-
 export const hasError = (spans) => {return (spans.find(s => s.tags?.error === 'true') != undefined)}
+export const errorTraces = (traces) => {return traces.filter(hasError)};
 
 /**
  * Given a specific span in a trace (collection of spans), returns the fully

@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './custom.css'
 
 import * as d3 from 'd3';
+import embed from 'vega-embed';
 import * as st from './structure_tree.js';
 import * as th from './trace_heatmap.js'
 import * as trace from './trace.js';
@@ -22,12 +23,34 @@ const pairUp = (arr) => {
 
 const dateFromTimestamp = (timestamp) => new Date(timestamp / 1000);
 
-const traceDrillDown = (traceName, traces) => {
-    // transition the UI
-    d3.select('#current-view').text(traceName);
+const newUi = (title) => {
+    d3.select('#current-view').text(title);
     d3.select(".struct-tip").style("opacity", 0);
     const charts = d3.select('.charts');
     charts.html("");
+
+    return charts;
+}
+
+const errorExplorer = (traceName, traces) => {
+    const charts = newUi(`${traceName} Error Explorer`);
+        
+    charts
+        .append('div')
+        .attr('class', 'row')
+        .append('div')
+        .attr('class', 'col')
+        .attr('id', 'error-explorer');
+
+    embed(
+        '#error-explorer',
+        'http://127.0.0.1:5000/error_chart/71e758c99341c4b5'
+    ).catch(console.error);
+}
+
+const traceDrillDown = (traceName, traces) => {
+    // transition the UI
+    const charts = newUi(traceName);
 
     // trace summary
     charts
@@ -63,18 +86,15 @@ const traceDrillDown = (traceName, traces) => {
 }
 
 const dashboard = (traces) => {
-    d3.select('#current-view').text("Dashboard");
+    const charts = newUi("Dashboard");
 
     let traceRoots = d3.group(traces, t => trace.getSpanName(trace.getRoot(t)));
     let rootCounts = Array.from(traceRoots.entries(), x => ({
         name: x[0], 
         count: x[1].length, 
         traces: x[1], 
-        errorTraceCount: trace.errorTraceCount(x[1])
+        errorTraces: trace.errorTraces(x[1])
     }));
-
-    const charts = d3.select('.charts');
-    charts.html("");
 
     const traceRows = charts.selectAll('div')
                             .data(pairUp(rootCounts))
@@ -92,10 +112,14 @@ const dashboard = (traces) => {
                 col.on('click', () => traceDrillDown(row[x].name, row[x].traces));
 
                 const counts = col.append('h5').text(d => `${row[x].count} traces.`);
-                if (row[x].errorTraceCount > 0) {
+                if (row[x].errorTraces.length > 0) {
                     counts.append('span')
                           .attr('class', 'error_count')
-                          .text(` ${row[x].errorTraceCount} with errors.`);
+                          .text(` ${row[x].errorTraces.length} with errors.`)
+                          .on('click', (e) => {
+                              e.stopPropagation();
+                              errorExplorer(row[x].name, row[x].errorTraces);
+                          });
                 }
 
                 const stDiv = col.append('div').attr('class', 'structure_tree');
