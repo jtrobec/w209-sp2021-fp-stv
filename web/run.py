@@ -10,8 +10,6 @@ from scipy import stats
 # set the project root directory as the dist folder
 app = Flask(__name__)
 
-traces_df = None
-
 @app.route("/")
 def index():
   return dist('index.html')
@@ -27,7 +25,7 @@ def dist(path):
 @app.route("/error_chart/<traceID>")
 def error_chart(traceID):
     #Filter to trace with error
-    traceWithError = traces_df.loc[traces_df['traceId'] == traceID]
+    traceWithError = load_trace(traceID)
     traceWithError = traceWithError.sort_values(by=['traceId','timestamp'],ascending=True).reset_index()
     traceWithErrorSpans = traceWithError.loc[traceWithError['error'] == True]
 
@@ -65,24 +63,20 @@ def error_chart(traceID):
     
     return combined.to_json()
 
-def load_traces():
+def load_trace(tid):
   traces = []
+
   baseDirectory = '../data/synthetic/20210302-hipster-shop'
-  directories = listdir(baseDirectory)
-  for directory in directories:
-      thisDirectory = join(baseDirectory, directory)
-      try:
-          with open(thisDirectory) as f:
-            data = pd.json_normalize(json.load(f))
-      except:
-          print('err')
-          continue
-      traces.append(data)
+  thisDirectory = join(baseDirectory, f'{tid}.json')
+
+  with open(thisDirectory) as f:
+    data = pd.json_normalize(json.load(f))
+    traces.append(data)
+
   tdf = pd.concat(traces, axis=0)
   tdf = tdf.sort_values(by=['traceId','timestamp'],ascending=True)
   tdf["error"] = tdf["tags.error"]
   return tdf
 
 if __name__ == "__main__":
-  traces_df = load_traces()
   app.run(debug=True)
