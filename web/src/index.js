@@ -33,6 +33,70 @@ const newUi = (title) => {
     return charts;
 }
 
+const updateTraceChart = (traceId) => {
+    d3.select('#current-view').text(`${traceId} Trace Explorer`);
+    embed(
+        '#trace-chart',
+        `trace_chart/${traceId}`
+    ).catch(console.error);
+    embed(
+        '#trace-tree-chart',
+        `trace_tree_chart/${traceId}`,
+        {width: 875}
+    ).catch(console.error);
+}
+
+const traceExplorer = (traceId, traceIds) => {
+    const charts = newUi(`${traceId} Trace Explorer`);
+
+    const crow = charts
+        .append('div')
+        .attr('class', 'row');
+
+    const vizCol = crow
+        .append('div')
+        .attr('class', 'col');
+    
+    vizCol.append('div')
+        .attr('class', 'row')
+        .append('div')
+        .attr('class', 'col')
+        .attr('id', 'trace-chart');
+    
+    vizCol.append('div')
+        .attr('class', 'row')
+        .append('div')
+        .attr('class', 'col')
+        .attr('id', 'trace-tree-chart');
+    
+    vizCol.append('div')
+        .attr('class', 'row')
+        .append('div')
+        .attr('class', 'col')
+        .attr('id', '#');
+
+    const traceNavCol = crow
+        .append('div')
+        .attr('class', 'col col-sm')
+        .attr('id', 'trace-list');
+
+    traceNavCol.append('ul')
+        .selectAll('li')
+        .data(traceIds)
+        .join('li')
+        .append('a')
+        .attr('class', 'trace-select-link')
+        .text(d => d)
+        .on('click', (e, i) => {
+            updateTraceChart(i);
+            // reset existing selected...
+            d3.selectAll('.trace-select-link').attr('class', 'trace-select-link');
+            d3.select(e.target).attr('class', 'trace-select-link trace-select-link-selected');
+        })
+
+    updateTraceChart(traceId)
+}
+
 const updateErrorChart = (traceId) => {
     d3.select('#error-chart').html("");
     d3.select('#error-span-durations').html("");
@@ -205,6 +269,13 @@ d3.json("./trace-files.json").then((traceList) => {
         // some of the traces in the collection are bogus
         let goodTraces = traces.filter(x => x.length > 0);
         goodTraces.forEach(t => trace.setSpanMetadata(t));
+
+        const traceIds = goodTraces.map(t => trace.getRoot(t).id);
+        const traceSearch = d3.select('#trace-search');
+        traceSearch.on("keypress", (e, i) => {
+            if(e.keyCode === 32 || e.keyCode === 13){
+                traceExplorer(traceSearch, traceIds);
+            }});
 
         d3.select('a.navbar-brand').on('click', () => dashboard(goodTraces));
         dashboard(goodTraces);
