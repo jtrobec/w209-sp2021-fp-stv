@@ -1,5 +1,6 @@
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.json';
 import './custom.css'
 
 import * as d3 from 'd3';
@@ -255,30 +256,20 @@ const dashboard = (traces) => {
     traceRows.each(traceCol);
 }
 
-d3.json("./trace-files.json").then((traceList) => {
-    const promises = traceList.slice(0, MAX_TRACES_TO_LOAD)
-                              .map(f => d3.json(`data/synthetic/20210302-hipster-shop/${f}`)
-                              .catch(function(error){
-                                  // some traces didn't fully load from zipkin API
-                                  console.log(`Error loading trace file: ${error}`);
-                                  return [];
-                              }));
+d3.json("data/synthetic/20210409-hipster-shop-sl.json").then((allSpans) => {
+    const traces = Array.from(d3.group(allSpans, x => x.traceId)).map(([k, v]) => v);
+    traces.forEach(t => trace.setSpanMetadata(t));
 
+    const traceIds = traces.map(t => trace.getRoot(t).id);
+    const traceSearch = d3.select('#trace-search');
+    traceSearch.on("keypress", (e, i) => {
+        if(e.keyCode === 32 || e.keyCode === 13){
+            traceExplorer(traceSearch.text(), traceIds);
+        }});
+    d3.select('#load-trace-button').on("click", (e, i) => {
+        traceExplorer(traceSearch.text(), traceIds);
+    })
 
-    const traces = Promise.all(promises).then(traces => {
-        // some of the traces in the collection are bogus
-        let goodTraces = traces.filter(x => x.length > 0);
-        goodTraces.forEach(t => trace.setSpanMetadata(t));
-
-        const traceIds = goodTraces.map(t => trace.getRoot(t).id);
-        const traceSearch = d3.select('#trace-search');
-        traceSearch.on("keypress", (e, i) => {
-            if(e.keyCode === 32 || e.keyCode === 13){
-                traceExplorer(traceSearch, traceIds);
-            }});
-
-        d3.select('a.navbar-brand').on('click', () => dashboard(goodTraces));
-        dashboard(goodTraces);
-    });
-
+    d3.select('a.navbar-brand').on('click', () => dashboard(traces));
+    dashboard(traces);
 });
