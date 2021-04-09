@@ -1,6 +1,6 @@
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap-icons/font/bootstrap-icons.json';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import './custom.css'
 
 import * as d3 from 'd3';
@@ -264,10 +264,10 @@ d3.json("data/synthetic/20210409-hipster-shop-sl.json").then((allSpans) => {
     const traceSearch = d3.select('#trace-search');
     traceSearch.on("keypress", (e, i) => {
         if(e.keyCode === 32 || e.keyCode === 13){
-            traceExplorer(traceSearch.text(), traceIds);
+            traceExplorer(traceSearch.node().value, traceIds);
         }});
     d3.select('#load-trace-button').on("click", (e, i) => {
-        traceExplorer(traceSearch.text(), traceIds);
+        traceExplorer(traceSearch.node().value, traceIds);
     })
 
     d3.select('a.navbar-brand').on('click', () => dashboard(traces));
