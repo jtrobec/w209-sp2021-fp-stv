@@ -4,12 +4,14 @@ import pandas as pd
 import json
 
 from flask import Flask, request, Response, send_from_directory
+from flask_compress import Compress
 from os import listdir
 from os.path import dirname, isfile, join, realpath
 from scipy import stats
 
 # set the project root directory as the dist folder
 app = Flask(__name__)
+Compress(app)
 
 app_dir = dirname(realpath(__file__))
 data_dir = join(app_dir, '../data')

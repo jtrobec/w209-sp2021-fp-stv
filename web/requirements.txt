@@ -1,4 +1,5 @@
 altair
 Flask>=1.0
+Flask-Compress
 pandas
 scipy
