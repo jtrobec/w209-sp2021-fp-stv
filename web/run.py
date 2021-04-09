@@ -17,7 +17,8 @@ app_dir = dirname(realpath(__file__))
 data_dir = join(app_dir, '../data')
 dist_dir = join(app_dir, 'dist')
 trace_csv_path = join(data_dir, 'synthetic', '20210302-hipster-shop.csv')
-
+trace_csv_path_john = join(data_dir, 'synthetic', '20210302-hipster-shop-singletrace.csv')
+trace_csv_path_agg = join(data_dir, 'synthetic', '20210302-hipster-shop-aggregate.csv')
 alt.data_transformers.disable_max_rows()
 
 @app.route("/")
@@ -33,108 +34,39 @@ def dist(path):
   return send_from_directory(dist_dir, path)
 
 def get_john_trace_df():
-  traces = load_traces()
-  names = []
-  durations = []
-  traceIDs = []
-  parentIDs = []
-  ids = []
-  traceErrors = []
-  for index, row in traces.iterrows():
-    traceIDs.append(row['traceId'])
-    ids.append(row['id'])
-    try:
-        parentIDs.append(row['parentId'])
-    except:
-        parentIDs.append('Na')
-    try:
-        traceErrors.append(row['tags']['error'])
-    except:
-        traceErrors.append('false')
-              
-    names.append(row['name'])
-    durations.append(row['duration'])
+  return pd.read_csv(trace_csv_path_john)
 
-  traceDf = pd.DataFrame({'Resource Name' : names, 'Duration':durations, 'Trace_ID': traceIDs, 'ID': ids, 'Parent_ID': parentIDs, 'Error?':traceErrors})
-  traceSum = 0 
-  currTraceID = ''
-  duration_starts = []
-  duration_ends = []
-  duration_start = 0
-  duration_end = 0
-  for i in range(len(traceDf)):
-      val = traceDf.iloc[i]
-      if val['Trace_ID'] != currTraceID:
-          duration_start = 0
-          currTraceID = val['Trace_ID']
-      else:
-          duration_start = duration_end
-      duration_end = duration_start +  val['Duration']
-      duration_starts.append(duration_start)
-      duration_ends.append(duration_end)
-  traceDf['duration_start'] = duration_starts
-  traceDf['duration_end'] = duration_ends
-  traceDf['Data Transfered'] = [round(np.random.uniform(4,10000),1) for i in range(len(traceDf))]
-  updatedTraces = pd.DataFrame()
-  for traceID in set(traceDf['Trace_ID']):
-    tes = traceDf[traceDf['Trace_ID'] == traceID]
-    root = list(tes['Trace_ID'])[0]
-    tes['order'] = [100 for x in range(len(tes))]
-    tes['loc start'] = [100 for x in range(len(tes))]
-    tes['loc end'] = [100 for x in range(len(tes))]
-
-    order = []
-    root = list(tes['Trace_ID'])[0]
-    startLoc = 0
-    order = 0
-    for i in range(len(tes)):
-        t = tes.iloc[i]
-        if t['ID'] == root:
-            t['order'] = order
-            t['loc start'] = startLoc
-            t['loc end'] = t['loc start'] + t['Duration']
-            tes.iloc[i] = t
-    c = 0
-    currentRoot = root
-    startLoc += 100000
-    lastRoot = root
-    lastRoots = []
-    while c < len(tes) - 1:
-        startLoc = tes[tes['ID'] == currentRoot]['loc start'] + 100000
-        order = tes[tes['ID'] == currentRoot]['order']
-        for i in range(len(tes)):
-            t = tes.iloc[i]
-            if t['Parent_ID'] == currentRoot:
-                t['order'] = order + .5
-                order = order + 1
-                t['loc start'] = startLoc
-                t['loc end'] = t['loc start'] + t['Duration']
-                tes.iloc[i] = t
-                lastRoots.append(t['ID'])
-                c += 1
-        currentRoot = lastRoots.pop(0)
-        updatedTraces = updatedTraces.append(tes)
-  return updatedTraces
+def get_john_trace_df_agg():
+  return pd.read_csv(trace_csv_path_agg)
 
 def plotTrace(traceID, traceDf):
     source = traceDf[traceDf['Trace_ID'] == traceID]
-    return alt.Chart(source, title='Trace: ' + traceID).mark_bar().encode(
+    return alt.Chart(source, title='Waterfall View Trace: ' + traceID).mark_bar().encode(
         y=alt.Y('Resource Name', type='nominal', sort=None),
         x = alt.X("duration_start:Q", title= "Duration"),
         x2 = "duration_end:Q",
-        color = 'Resource Name:N',
+        color = alt.Color('Error?:N',legend =None),
         tooltip = ['Duration:Q', 'Data Transfered:Q','Error?:N']
     )
 
 def plotTraceTree(traceID, traceDf):
     source = traceDf[traceDf['Trace_ID'] == traceID]
-    return alt.Chart(source, title='Trace: ' + traceID).mark_bar().encode(
-        y=alt.Y('Resource Name', type='nominal', sort=alt.SortField('order')),
+    bars = alt.Chart(source, title='Tree View Trace: ' + traceID).mark_bar().encode(
+        y=alt.Y('order:N', title='Resource Name', axis = None),
         x = alt.X("loc start:Q", title= "Duration"),
         x2= "loc end:Q",
-        color = 'Resource Name:N',
+        color = alt.Color('depth:Q',sort='descending', legend = alt.Legend(title = 'Tree Depth')),
         tooltip = ['ID:N', 'Parent_ID:N', 'Duration:Q','Error?:N']
     )
+    
+    text = alt.Chart(source).mark_text(
+        align='right'
+    ).encode(
+        y=alt.Y('order:N', axis = None),
+        x=alt.value(-3),
+        text='Resource Name:N',
+    )
+    return bars + text
 
 @app.route("/trace_chart/<traceID>")
 def trace_chart(traceID):
