@@ -4,13 +4,18 @@ import pandas as pd
 import json
 
 from flask import Flask, request, Response, send_from_directory
+from flask_caching import Cache
 from flask_compress import Compress
 from os import listdir
 from os.path import dirname, isfile, join, realpath
 from scipy import stats
 
+
 # set the project root directory as the dist folder
 app = Flask(__name__)
+cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
+
+cache.init_app(app)
 Compress(app)
 
 app_dir = dirname(realpath(__file__))
@@ -92,7 +97,6 @@ def error_chart(traceID):
     traceWithError["end"] = 0
 
     spanCount = len(traceWithError)
-    print(traceWithError.loc[0])
     traceWithError.loc[0,'end'] = traceWithError.loc[0,'duration']
 
     for i in range(1,spanCount):
@@ -183,7 +187,6 @@ def error_span_durations_summary(traceID):
   traceWithError["end"] = 0
 
   spanCount = len(traceWithError)
-  print(traceWithError.loc[0])
   traceWithError.loc[0,'end'] = traceWithError.loc[0,'duration']
 
   for i in range(1,spanCount):
@@ -204,6 +207,7 @@ def error_span_durations_summary(traceID):
 
   return Response(json.dumps(summaries), mimetype='application/json')
 
+@cache.cached(timeout=3000, key_prefix='load_traces')
 def load_traces():
   traces = pd.read_csv(trace_csv_path)
   return traces
