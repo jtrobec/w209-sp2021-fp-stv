@@ -16,7 +16,7 @@ Compress(app)
 app_dir = dirname(realpath(__file__))
 data_dir = join(app_dir, '../data')
 dist_dir = join(app_dir, 'dist')
-trace_csv_path = join(data_dir, 'synthetic', '20210302-hipster-shop.csv')
+trace_csv_path = join(data_dir, 'synthetic', '20210409-hipster-shop-sl.csv')
 trace_csv_path_john = join(data_dir, 'synthetic', '20210302-hipster-shop-singletrace.csv')
 trace_csv_path_agg = join(data_dir, 'synthetic', '20210302-hipster-shop-aggregate.csv')
 alt.data_transformers.disable_max_rows()
@@ -123,8 +123,6 @@ def error_chart(traceID):
     
     return combined.to_json()
 
-
-
 @app.route("/error_span_durations/<traceID>")
 def error_span_durations(traceID):
   traces = load_traces()
@@ -208,25 +206,7 @@ def error_span_durations_summary(traceID):
 
 def load_traces():
   traces = pd.read_csv(trace_csv_path)
-  traces = traces.sort_values(by=['traceId','timestamp'],ascending=True)
-  traces["error"] = traces["tags.error"]
-
   return traces
-
-def load_trace(tid):
-  traces = []
-
-  baseDirectory = '../data/synthetic/20210302-hipster-shop'
-  thisDirectory = join(baseDirectory, f'{tid}.json')
-
-  with open(thisDirectory) as f:
-    data = pd.json_normalize(json.load(f))
-    traces.append(data)
-
-  tdf = pd.concat(traces, axis=0)
-  tdf = tdf.sort_values(by=['traceId','timestamp'],ascending=True)
-  tdf["error"] = tdf["tags.error"]
-  return tdf
 
 if __name__ == "__main__":
   app.run(debug=True)

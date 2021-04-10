@@ -12,6 +12,12 @@ import { schemeDark2 } from 'd3';
 
 const MAX_TRACES_TO_LOAD = 5000;
 
+/**
+ * Given an array, group the elements into pairs.
+ * 
+ * @param {array} arr 
+ * @returns an array of arrays of 2 elements, last entry may have only 1 
+ */
 const pairUp = (arr) => {
     return arr.reduce((acc, cur) => {
         if (acc.length == 0 || acc[acc.length - 1].length == 2) {
@@ -23,6 +29,11 @@ const pairUp = (arr) => {
     }, [])
 }
 
+/**
+ * Convert a unix, microsecond timestamp into a Date object.
+ * @param {long} timestamp 
+ * @returns the timestamp as a Date.
+ */
 const dateFromTimestamp = (timestamp) => new Date(timestamp / 1000);
 
 const newUi = (title) => {
@@ -48,6 +59,7 @@ const updateTraceChart = (traceId) => {
 }
 
 const traceExplorer = (traceId, traceIds) => {
+    history.pushState({last: "trace-explorer"}, "Trace Visualization - Trace Explorer", "?te");
     const charts = newUi(`${traceId} Trace Explorer`);
 
     const crow = charts
@@ -120,6 +132,7 @@ const updateErrorChart = (traceId) => {
 }
 
 const errorExplorer = (traceName, traces) => {
+    history.pushState({last: "error-explore"}, "Trace Visualization - Error Explorer", "?ee");
     const charts = newUi(`${traceName} Error Explorer`);
     const traceIds = traces.map(t => trace.getRoot(t).id);
 
@@ -172,6 +185,7 @@ const errorExplorer = (traceName, traces) => {
 }
 
 const traceDrillDown = (traceName, traces) => {
+    history.pushState({last: "trace-drill"}, "Trace Visualization - Trace Drill Down", "?tdd");
     // transition the UI
     const charts = newUi(traceName);
 
@@ -202,14 +216,22 @@ const traceDrillDown = (traceName, traces) => {
         .append('svg')
         .attr('viewBox', `0, 0, 800, 300`);
 
-    const histo = heatRow.append('div')
+    const heatleg = heatRow.append('div')
+        .attr('class', 'col-sm-4')
+        .append('svg')
+        .attr('viewBox', `0, 0, 400, 400`)
+
+    const histo = charts.append('div')
+        .attr('class', 'row')
+        .append('div')
         .attr('class', 'col');
         
-    th.traceHeatmap(heatmap, histo, traces);
+    th.traceHeatmap(heatmap, heatleg, histo, traces);
 }
 
 const dashboard = (traces) => {
     const charts = newUi("Dashboard");
+    history.pushState({last: "dash"}, "Trace Visualization - Dashboard", "?dash");
 
     let traceRoots = d3.group(traces, t => trace.getSpanName(trace.getRoot(t)));
     let rootCounts = Array.from(traceRoots.entries(), x => ({
@@ -232,7 +254,9 @@ const dashboard = (traces) => {
             if (row[x]) {
                 col.attr('class', 'col trace_summary');
                 col.append('h3').text(d => row[x].name);
-                col.on('click', () => traceDrillDown(row[x].name, row[x].traces));
+                col.on('click', () => {
+                    traceDrillDown(row[x].name, row[x].traces);
+                });
 
                 const counts = col.append('h5').text(d => `${row[x].count} traces.`);
                 if (row[x].errorTraces.length > 0) {
@@ -271,5 +295,11 @@ d3.json("data/synthetic/20210409-hipster-shop-sl.json").then((allSpans) => {
     })
 
     d3.select('a.navbar-brand').on('click', () => dashboard(traces));
+
+    window.onpopstate = (e) => {
+        if (e.state.last === "dash") {
+            dashboard(traces);
+        }
+    };
     dashboard(traces);
 });

@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import * as scales from 'd3-scale-chromatic';
 import * as lg from 'd3-svg-legend';
 import * as trace from './trace.js';
 import * as v from 'vega';
@@ -57,6 +58,8 @@ const drawDurationHistogram = (spans, histo) => {
 
     // render a histogram of timings
     vla.markBar({ tooltip: true })
+        .title('Histogram of Durations')
+        .width(800)
         .data(spans)
         .encode(
             vla.x().fieldQ("duration").bin(true),
@@ -71,7 +74,7 @@ const drawDurationHistogram = (spans, histo) => {
         });
 };
 
-export const traceHeatmap = (svg, histo, traces, config=defaults) => {
+export const traceHeatmap = (svg, heatleg, histo, traces, config=defaults) => {
     const conf = {...defaults, ...config};
     const timeRange = d3.extent(d3.merge(traces).map(t => t.timestamp));
     const durationRange = d3.extent(d3.merge(traces).map(t => t.duration));
@@ -103,9 +106,10 @@ export const traceHeatmap = (svg, histo, traces, config=defaults) => {
     depths = Array.from(depths).sort();
 
     // create scales
-    const heatmapXScale = d3.scaleBand().domain(timeBuckets).range([0, heatmapWidth]);
-    const heatmapYScale = d3.scaleBand().domain(fqnsInDfsOrder).range([0, heatmapHeight]);
-    const heatmapColorScale = d3.scaleLinear().domain([0, durationRange[1]]).range(['steelblue', 'firebrick']);
+    const heatmapXScale = d3.scaleBand().domain(timeBuckets).range([0, heatmapWidth]).paddingInner(0.02);
+    const heatmapYScale = d3.scaleBand().domain(fqnsInDfsOrder).range([0, heatmapHeight]).paddingInner(0.02);
+    const heatmapColorScale = d3.scaleSequentialLog(scales.interpolateViridis).domain([1, durationRange[1]]);
+    // const heatmapColorScale = d3.scaleSequential(scales.interpolateViridis).domain([1, durationRange[1]]);
 
     const yAxisXScale = d3.scaleBand().domain(depths).range([0, 20]);
 
@@ -138,7 +142,21 @@ export const traceHeatmap = (svg, histo, traces, config=defaults) => {
        .attr('class', 'heatmap-y-axis')
        .attr('transform', `translate(${conf.margin.left}, ${conf.margin.top})`);
 
-    const yAxisPillHeight = 20;
+    const legend = heatleg.append("g")
+       .attr("class", "legend")
+       .attr("transform", `translate(${conf.margin.left},${conf.margin.top})`);
+
+    const legendLinear = lg.legendColor()
+                .title('Duration (micros)')
+                .shapeWidth(30)
+                .cells(10)
+                .orient('vertical')
+                .labelFormat('.2s')
+                .scale(heatmapColorScale);
+
+    legend.call(legendLinear);
+
+    const yAxisPillHeight = 25;
 
     const yAxisEntry = (entryG) => {
         entryG.append('rect')
@@ -148,9 +166,15 @@ export const traceHeatmap = (svg, histo, traces, config=defaults) => {
             .attr('rx', 5)
             .attr('ry', 5)
             .attr('fill', '#ccc');
-        entryG.append('text')
-            .attr('transform', `translate(5, ${heatmapYScale.bandwidth() / 2.0})`)
-            .text(d => d.data.shortName);
+        const lab = entryG.append('text')
+            .attr('transform', `translate(5, ${heatmapYScale.bandwidth() / 2.0})`);
+        lab.append('tspan')
+            .attr('x', '0.25em')
+            .text(d => d.data.shortName.split('/')[0].toUpperCase());
+        lab.append('tspan')
+            .attr('x', '0.25em')
+            .attr('dy', '1em')
+            .text(d => d.data.shortName.split('/')[1]);
     };
     yAxis.selectAll('g')
        .data(traceStructure)
