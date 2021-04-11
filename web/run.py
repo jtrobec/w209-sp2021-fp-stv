@@ -23,7 +23,7 @@ data_dir = join(app_dir, '../data')
 dist_dir = join(app_dir, 'dist')
 trace_csv_path = join(data_dir, 'synthetic', '20210409-hipster-shop-sl.csv')
 trace_csv_path_john = join(data_dir, 'synthetic', '20210409-hipster-shop-sl-single.csv')
-trace_csv_path_agg = join(data_dir, 'synthetic', '20210302-hipster-shop-aggregate.csv')
+trace_csv_path_agg = join(data_dir, 'synthetic', '20210409-hipster-shop-sl-agg.csv')
 alt.data_transformers.disable_max_rows()
 
 @app.route("/")

@@ -1,0 +1,21 @@
+,root,Resource Name,Average Duration,Error Count,Error Rate,Average Data Transfered,Average loc start,Average loc end,Average order
+0,/product,/adrequest,245798.4,1513,0.0,5038.5,100000,345798.4,1.5
+1,/product,/getproducts,116964.6,3026,0.0,5025.3,150000,266964.6,1.8
+2,/product,/getrecommendations,316405.2,1513,0.0,5049.7,100000,416405.2,1.5
+3,/product,/product,569647.1,1513,0.0,4954.7,0,569647.1,0.0
+0,/shipping,/address,51654.8,252,0.0,5149.0,200000,251654.8,1.0
+1,/shipping,/getquote,298452.4,252,0.0,4690.5,100000,398452.4,0.5
+2,/shipping,/shipping,347511.9,252,0.0,4887.4,0,347511.9,0.0
+0,/checkout,/address,49100.7,8747,0.0,4978.5,200000,249100.7,3.0
+1,/checkout,/checkout,1660054.5,11333,0.346,4966.4,0,1660054.5,0.0
+2,/checkout,/creditcardinfo,24861.9,8747,0.0,5054.8,200000,224861.9,3.0
+3,/checkout,/getcart,99041.6,8747,0.0,4972.2,200000,299041.6,3.0
+4,/checkout,/getconversion,173458.4,8747,0.0,5053.4,200000,373458.4,3.0
+5,/checkout,/money,74460.2,8747,0.0,5006.7,300000,374460.2,3.5
+6,/checkout,/orderresult,49759.4,7414,0.0,5028.2,300000,349759.4,3.5
+7,/checkout,/placeorder,860318.2,11333,0.346,4979.4,100000,960318.2,0.5
+8,/checkout,/sendorderconfirmation,502191.4,8747,0.152,4998.9,200000,702191.4,3.0
+0,/cart,/cart,416335.6,736,0.0,5001.4,0,416335.6,0.0
+1,/cart,/getcart,102073.4,736,0.0,4944.1,100000,202073.4,1.0
+2,/cart,/getproducts,114284.0,736,0.0,5055.1,200000,314284.0,1.5
+3,/cart,/getrecommendations,314475.5,736,0.0,5014.6,100000,414475.5,1.0
