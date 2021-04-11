@@ -41,6 +41,8 @@ const newUi = (title) => {
     d3.select(".struct-tip").style("opacity", 0);
     const charts = d3.select('.charts');
     charts.html("");
+    const info = d3.select('#info');
+    info.html("");
 
     return charts;
 }
@@ -190,13 +192,17 @@ const traceDrillDown = (traceName, traces) => {
     const charts = newUi(traceName);
 
     // trace summary
-    charts
+    const desc = charts
         .append('div')
         .attr('class', 'row')
         .append('div')
-        .attr('class', 'col')
-        .append('h4')
+        .attr('class', 'col');
+    desc.append('h4')
         .text('Minute-by-Minute Average Latencies per Span');
+    desc.append('p')
+        .html('The heatmap below shows the average duration of spans starting in a given minute. Mouse over the '
+        + 'minute/span to see a histogram of durations for spans starting in that minute. The y-axis shows the structure '
+        + 'of the trace tree.')
 
     const summary = charts
         .append('div')
@@ -204,7 +210,7 @@ const traceDrillDown = (traceName, traces) => {
         .append('div')
         .attr('class', 'col');
     const times = d3.extent(d3.merge(traces).map(t => t.timestamp));
-    summary.text(`Start: ${dateFromTimestamp(times[0])}, Stop: ${dateFromTimestamp(times[1])}`);
+    summary.html(`<em>Start:</em> ${dateFromTimestamp(times[0])}, <em>Stop:</em> ${dateFromTimestamp(times[1])}`);
 
     // heatmap
     const heatRow = charts
@@ -217,7 +223,7 @@ const traceDrillDown = (traceName, traces) => {
         .attr('viewBox', `0, 0, 800, 300`);
 
     const heatleg = heatRow.append('div')
-        .attr('class', 'col-sm-4')
+        .attr('class', 'col-sm-3')
         .append('svg')
         .attr('viewBox', `0, 0, 400, 400`)
 
@@ -230,8 +236,16 @@ const traceDrillDown = (traceName, traces) => {
 }
 
 const dashboard = (traces) => {
-    const charts = newUi("Dashboard");
     history.pushState({last: "dash"}, "Trace Visualization - Dashboard", "?dash");
+    const charts = newUi("Dashboard");
+
+    const info = d3.select('#info');
+    info.append('h5')
+        .text('Below are the traces in the current dataset.');
+    info.append('p')
+        .html('Click on a <em>trace card</em> to explore span durations over time, click on an <em>error count</em> '
+        + 'to get information about traces with errors, or, enter a <em>trace ID</em> into the search bar above '
+        + 'to explore an individual trace.');
 
     let traceRoots = d3.group(traces, t => trace.getSpanName(trace.getRoot(t)));
     let rootCounts = Array.from(traceRoots.entries(), x => ({

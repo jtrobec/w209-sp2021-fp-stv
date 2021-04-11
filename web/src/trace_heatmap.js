@@ -53,18 +53,19 @@ const vegaInit = () => {
 
 vegaInit();
 
-const drawDurationHistogram = (spans, histo) => {
+const drawDurationHistogram = (spans, histo, durationRange) => {
     histo.html('');
+    const dat = binDurations(50, durationRange, spans);
 
     // render a histogram of timings
-    vla.markBar({ tooltip: true })
+    vla.markBar()
         .title('Histogram of Durations')
-        .width(800)
-        .data(spans)
+        .width(1000)
+        .data(dat)
         .encode(
-            vla.x().fieldQ("duration").bin(true),
-            vla.y().count(),
-            vla.tooltip([vla.fieldQ("duration")])
+            vla.x().fieldQ("start").title('Duration (micros)'),
+            vla.x2().fieldQ("end"),
+            vla.y().fieldQ("count").scale({domain: [0, 350]}).title('Count of Spans')
         )
         .render()
         .then(viewElement => {
@@ -74,12 +75,34 @@ const drawDurationHistogram = (spans, histo) => {
         });
 };
 
+const clearDurationHistogram = (histo) => {
+    histo.html('');
+    histo.append('div')
+        .attr('class', 'row')
+        .append('div')
+        .attr('class', 'col')
+        .style('text-align', 'center')
+        .append('h5')
+        .text('Mouse over a square in the heatmap to see a histogram of the span durations for that minute...');
+};
+
+const binDurations = (chunks, durationRange, spans) => {
+    const bucketWidth = durationRange[1]/chunks;
+    const thresholds = d3.range(0, durationRange[1], bucketWidth) 
+    const binner = d3.bin().thresholds(thresholds);
+    let buckets = binner(spans.map(s => s.duration));
+    for (; buckets.length < thresholds.length; buckets.push([])) { }
+    return d3.zip(thresholds, buckets).map(([t, b]) => ({start: t, end: t + bucketWidth - 1, count: b.length}));
+}
+
 export const traceHeatmap = (svg, heatleg, histo, traces, config=defaults) => {
     const conf = {...defaults, ...config};
     const timeRange = d3.extent(d3.merge(traces).map(t => t.timestamp));
     const durationRange = d3.extent(d3.merge(traces).map(t => t.duration));
     const heatmapWidth = conf.width - conf.margin.left - conf.margin.right - conf.yAxisWidth;
     const heatmapHeight = conf.height - conf.margin.top - conf.margin.bottom - conf.xAxisHeight;
+
+    clearDurationHistogram(histo);
 
     const timeCoef = getTimeCoefficient(conf.granularity);
     const timeBucket = (time) => Math.floor(time / timeCoef) * timeCoef;
@@ -125,7 +148,12 @@ export const traceHeatmap = (svg, heatleg, histo, traces, config=defaults) => {
         .attr('height', heatmapYScale.bandwidth())
         .attr('fill', d => heatmapColorScale(d.avgDur))
         .on('mouseover', (e, d) => {
-            drawDurationHistogram(d.spans, histo);
+            d3.select(e.target).attr('stroke', 'cornflowerblue');
+            drawDurationHistogram(d.spans, histo, durationRange);
+        })
+        .on('mouseleave', (e, d) => {
+            d3.select(e.target).attr('stroke', null);
+            clearDurationHistogram(histo);
         });
 
     // x-axis
@@ -169,10 +197,10 @@ export const traceHeatmap = (svg, heatleg, histo, traces, config=defaults) => {
         const lab = entryG.append('text')
             .attr('transform', `translate(5, ${heatmapYScale.bandwidth() / 2.0})`);
         lab.append('tspan')
-            .attr('x', '0.25em')
+            .attr('x', '0.125em')
             .text(d => d.data.shortName.split('/')[0].toUpperCase());
         lab.append('tspan')
-            .attr('x', '0.25em')
+            .attr('x', '0.125em')
             .attr('dy', '1em')
             .text(d => d.data.shortName.split('/')[1]);
     };
@@ -184,15 +212,17 @@ export const traceHeatmap = (svg, heatleg, histo, traces, config=defaults) => {
     yAxis.append("g")
         .attr('transform', `translate(0, ${(heatmapYScale.bandwidth() / 2.0)})`)
         .attr("fill", "none")
-        .attr("stroke", "#555")
-        .attr("stroke-opacity", 0.4)
+        .attr("stroke", "#ccc")
+        .attr("stroke-opacity", 1)
         .attr("stroke-width", 1.5)
         .style("pointer-events", "none")
         .selectAll('path')
         .data(traceStructure.links())
         .join('path')
         .style("pointer-events", "none")
-        .attr("d", d3.linkVertical()
-            .x(n => yAxisXScale(n.depth))
-            .y(n => heatmapYScale(n.data.fullyQualifiedName)));
+        .attr("d", ({source, target}) => {
+                const startX = yAxisXScale(source.depth), startY = heatmapYScale(source.data.fullyQualifiedName);
+                const xMove = yAxisXScale(target.depth), yMove = heatmapYScale(target.data.fullyQualifiedName);
+                return `M${startX} ${startY} V ${yMove} H ${xMove}`;
+        });
 }
