@@ -22,7 +22,7 @@ app_dir = dirname(realpath(__file__))
 data_dir = join(app_dir, '../data')
 dist_dir = join(app_dir, 'dist')
 trace_csv_path = join(data_dir, 'synthetic', '20210409-hipster-shop-sl.csv')
-trace_csv_path_john = join(data_dir, 'synthetic', '20210302-hipster-shop-singletrace.csv')
+trace_csv_path_john = join(data_dir, 'synthetic', '20210409-hipster-shop-sl-single.csv')
 trace_csv_path_agg = join(data_dir, 'synthetic', '20210302-hipster-shop-aggregate.csv')
 alt.data_transformers.disable_max_rows()
 
@@ -38,6 +38,7 @@ def data(path):
 def dist(path):
   return send_from_directory(dist_dir, path)
 
+@cache.cached(timeout=3000, key_prefix='john_trace')
 def get_john_trace_df():
   return pd.read_csv(trace_csv_path_john)
 
