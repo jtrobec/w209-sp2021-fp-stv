@@ -48,7 +48,7 @@ def get_john_trace_df_agg():
 def plotTrace(traceID, traceDf):
     source = traceDf[traceDf['Trace_ID'] == traceID]
     return alt.Chart(source, title='Waterfall View Trace: ' + traceID).mark_bar().encode(
-        y=alt.Y('Resource Name', type='nominal', sort=None),
+        y=alt.Y('Resource Name', title ='Span Name', type='nominal', sort=None),
         x = alt.X("duration_start:Q", title= "Duration"),
         x2 = "duration_end:Q",
         color = alt.Color('Error?:N',legend =None),
@@ -73,6 +73,16 @@ def plotTraceTree(traceID, traceDf):
         text='Resource Name:N',
     )
     return bars + text
+  
+def plotTraceAgg(traceType,traceDf ):
+    source = traceDf[traceDf ['root'] == traceType]
+    return alt.Chart(source, title='Aggregate Trace: ' + traceType).mark_bar().encode(
+        y=alt.Y('Resource Name',title ='Span Name', type='nominal', sort=alt.SortField('Average order')),
+        x = alt.X("Average loc start:Q", title= "Duration"),
+        x2 = "Average loc end:Q",
+        color = alt.Color('Error Rate:Q',sort='ascending'),
+        tooltip = ['Average Duration:Q', 'Average Data Transfered:Q', 'Error Rate:Q']
+    )
 
 @app.route("/trace_chart/<traceID>")
 def trace_chart(traceID):
@@ -84,6 +94,14 @@ def trace_chart(traceID):
 def trace_tree_chart(traceID):
   traceDf = get_john_trace_df()
   chart = plotTraceTree(traceID, traceDf)
+  return chart.to_json()
+
+@app.route("/trace_tree_chart_agg/frontend/<traceType>")
+def trace_tree_chart_agg(traceType):
+  traceType = "/" + traceType
+  print(traceType)
+  traceDf = get_john_trace_df_agg()
+  chart = plotTraceAgg(traceType, traceDf)
   return chart.to_json()
 
 @app.route("/error_chart/<traceID>")

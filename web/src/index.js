@@ -60,6 +60,15 @@ const updateTraceChart = (traceId) => {
     ).catch(console.error);
 }
 
+const updateAggChart = (traceType) => {
+    d3.select('#current-view').text(`${traceType} Trace Explorer`);
+    embed(
+        '#trace-tree-chart',
+        `trace_tree_chart_agg/${traceType}`,
+        {width: 875}
+    ).catch(console.error);
+}
+
 const traceExplorer = (traceId, traceIds) => {
     history.pushState({last: "trace-explorer"}, "Trace Visualization - Trace Explorer", "?te");
     const charts = newUi(`${traceId} Trace Explorer`);
@@ -191,7 +200,7 @@ const traceDrillDown = (traceName, traces) => {
     // transition the UI
     const charts = newUi(traceName);
 
-    // trace summary
+
     const desc = charts
         .append('div')
         .attr('class', 'row')
@@ -233,6 +242,11 @@ const traceDrillDown = (traceName, traces) => {
         .attr('class', 'col');
         
     th.traceHeatmap(heatmap, heatleg, histo, traces);
+    
+    charts.append('div')
+        .attr('id', 'trace-tree-chart');
+    // th.traceHeatmap(heatmap, heatleg, histo, traces);
+    updateAggChart(traceName);
 }
 
 const dashboard = (traces) => {
