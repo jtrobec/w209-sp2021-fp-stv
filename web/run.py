@@ -68,7 +68,7 @@ def plotTraceTree(traceID, traceDf):
     text = alt.Chart(source).mark_text(
         align='right'
     ).encode(
-        y=alt.Y('order:N', axis = None),
+        y=alt.Y('order:N',title='Span Name', axis = None),
         x=alt.value(-3),
         text='Resource Name:N',
     )
