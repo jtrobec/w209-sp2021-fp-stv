@@ -199,9 +199,50 @@ const traceDrillDown = (traceName, traces) => {
     history.pushState({last: "trace-drill"}, "Trace Visualization - Trace Drill Down", "?tdd");
     // transition the UI
     const charts = newUi(traceName);
+    const times = d3.extent(d3.merge(traces).map(t => t.timestamp));
 
+    const info = d3.select('#info');
+    info.append('h5')
+        .text('Aggregate Trace Views.');
+    info.append('p')
+        .html('Drill into minute-by-minute timings of trace latencies using the trace heatmap, or look at an aggregated view of the trace tree.');
 
-    const desc = charts
+    const accordion = charts
+        .append('div')
+        .attr('class', 'row')
+        .append('div')
+        .attr('class', 'col')
+        .append('div')
+        .attr('class', 'accordion')
+        .attr('id', 'explore-accordion');
+
+    const addAccordionItem = (name, header, expanded) => {
+        const item = accordion
+            .append('div')
+            .attr('class', 'card');
+        item.append('div')
+            .attr('class', 'card-header')
+            .attr('id', `acc-${name}-header`)
+            .append('h2')
+            .attr('class', 'mb-0')
+            .append('button')
+            .attr('class', `btn btn-link ${expanded ? '' : 'collapsed'}`) 
+            .attr('type', 'button')
+            .attr('data-toggle', "collapse")
+            .attr('data-target', `#acc-${name}-div`)
+            .text(header);
+        return item.append('div')
+            .attr('id', `acc-${name}-div`) 
+            .attr('class', `collapse ${expanded ? 'show' : ''}`) 
+            .attr('aria-labelledby', `acc-${name}-header`)
+            .attr('data-parent', "#explore-accordion")
+            .append('div')
+            .attr('class', "card-body");
+    };
+    const heatAcc = addAccordionItem('heatmap', 'Trace Durations Heatmap', true);
+
+    // heatmap
+    const desc = heatAcc
         .append('div')
         .attr('class', 'row')
         .append('div')
@@ -213,16 +254,14 @@ const traceDrillDown = (traceName, traces) => {
         + 'minute/span to see a histogram of durations for spans starting in that minute. The y-axis shows the structure '
         + 'of the trace tree.')
 
-    const summary = charts
+    const summary = heatAcc
         .append('div')
         .attr('class', 'row')
         .append('div')
         .attr('class', 'col');
-    const times = d3.extent(d3.merge(traces).map(t => t.timestamp));
     summary.html(`<em>Start:</em> ${dateFromTimestamp(times[0])}, <em>Stop:</em> ${dateFromTimestamp(times[1])}`);
 
-    // heatmap
-    const heatRow = charts
+    const heatRow = heatAcc
         .append('div')
         .attr('class', 'row');
 
@@ -233,19 +272,20 @@ const traceDrillDown = (traceName, traces) => {
 
     const heatleg = heatRow.append('div')
         .attr('class', 'col-sm-3')
+        .style('word-wrap', 'normal')
         .append('svg')
         .attr('viewBox', `0, 0, 400, 400`)
 
-    const histo = charts.append('div')
+    const histo = heatAcc.append('div')
         .attr('class', 'row')
         .append('div')
         .attr('class', 'col');
         
     th.traceHeatmap(heatmap, heatleg, histo, traces);
     
-    charts.append('div')
-        .attr('id', 'trace-tree-chart');
-    // th.traceHeatmap(heatmap, heatleg, histo, traces);
+    const treeAcc = addAccordionItem('tree', 'Aggregate Trace Tree', false);
+    treeAcc.append('div')
+           .attr('id', 'trace-tree-chart');
     updateAggChart(traceName);
 }
 

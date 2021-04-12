@@ -6,6 +6,10 @@
    </head>
    <body>
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-light" data-toggle="modal" data-target="#exampleModal">
+          <i class="bi bi-question-circle"></i>
+        </button>
         <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#"><i class="bi bi-house-door"></i> Trace Visualization</a>
         <input class="form-control form-control-dark w-100" type="text" id="trace-search" placeholder="Search" aria-label="Trace ID...">
         <ul class="navbar-nav px-3">
@@ -31,6 +35,49 @@
           </main>
         </div>
       </div>
+      <footer class="page-footer font-small pt-4">
+
+        <!-- Footer Links -->
+        <div class="container-fluid text-center text-md-left">
+      
+          <!-- Grid row -->
+          <div class="row">
+
+
+            <!-- Modal -->
+            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">About this application...</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <p>
+                      This tool visualizes distributed trace data in <a href="http://zipkin.io">Zipkin</a> format. It was
+                      built for a final project in UC Berkeley's MIDS W209 Data Visualization class.
+                    </p>
+                    <p>
+                      Authors: 
+                      <ul>
+                        <li>John Schulz</li>
+                        <li>Maria Vasiliadis</li>
+                        <li>Justin Trobec</li>
+                      </ul>
+                    </p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+
      <script src="main.js"></script>
    </body>
  </html>

@@ -153,8 +153,8 @@ export const traceHeatmap = (svg, heatleg, histo, traces, config=defaults) => {
         })
         .on('mouseleave', (e, d) => {
             d3.select(e.target).attr('stroke', null);
-            clearDurationHistogram(histo);
         });
+    heatmap.on('mouseleave', (e, d) => clearDurationHistogram(histo));
 
     // x-axis
     svg.append('g')
@@ -197,10 +197,10 @@ export const traceHeatmap = (svg, heatleg, histo, traces, config=defaults) => {
         const lab = entryG.append('text')
             .attr('transform', `translate(5, ${heatmapYScale.bandwidth() / 2.0})`);
         lab.append('tspan')
-            .attr('x', '0.125em')
+            .attr('x', '0.05em')
             .text(d => d.data.shortName.split('/')[0].toUpperCase());
         lab.append('tspan')
-            .attr('x', '0.125em')
+            .attr('x', '0.05em')
             .attr('dy', '1em')
             .text(d => d.data.shortName.split('/')[1]);
     };
