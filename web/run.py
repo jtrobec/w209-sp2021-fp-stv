@@ -64,7 +64,7 @@ def plotTraceTree(traceID, traceDf):
         color = alt.Color('depth:Q',sort='descending', legend = alt.Legend(title = 'Tree Depth')),
         tooltip = ['ID:N', 'Parent_ID:N', 'Duration:Q','Error?:N']
     )
-    
+
     text = alt.Chart(source).mark_text(
         align='right'
     ).encode(
@@ -73,7 +73,7 @@ def plotTraceTree(traceID, traceDf):
         text='Resource Name:N',
     )
     return bars + text
-  
+
 def plotTraceAgg(traceType,traceDf ):
     source = traceDf[traceDf ['root'] == traceType]
     return alt.Chart(source, title='Aggregate Trace: ' + traceType).mark_bar().encode(
@@ -122,10 +122,10 @@ def error_chart(traceID):
       traceWithError.loc[i,'start'] = traceWithError.loc[i,'timestamp'] - traceWithError.loc[0,'timestamp']
       traceWithError.loc[i,'end'] = traceWithError.loc[i,'start'] + (traceWithError.loc[i,'duration'])
 
-    bars = alt.Chart(traceWithError,title="Trace with Errors").mark_bar().encode(
-        x='start:Q',
-        x2='end:Q',
-        y=alt.Y('name:N',sort='x'),
+    bars = alt.Chart(traceWithError,title="Waterfall Trace View").mark_bar().encode(
+        x=alt.X('start:Q', title="Start,End"),
+        x2=('end:Q'),
+        y=alt.Y('name:N',sort='x',title="Span"),
         color=alt.condition(
             alt.datum.error == True,  # If there is an span error this test returns true
             alt.value('red'),     # which sets the bar orange.
@@ -135,15 +135,27 @@ def error_chart(traceID):
     ).interactive()
 
     point = alt.Chart(traceWithError).mark_point(filled=True, color='black').encode(
-        x='start:Q',
-        x2='end:Q',
-        y=alt.Y('name:N',sort='x'),
-    ).transform_filter(
-        (alt.datum.error == 'true')
+    x='start:Q',
+    x2='end:Q',
+    y=alt.Y('name:N',sort='x'),
+        ).transform_filter(
+        (alt.datum.error == True)
     )
 
-    combined = bars + point
-    
+
+    color=alt.condition(
+        alt.datum.error == True,  # If there is an span error this test returns true
+        alt.value('red'),     # which sets the bar orange.
+        alt.value('steelblue')   # And if it's not true it sets the bar steelblue.
+    )
+
+    legend = alt.Chart(traceWithError).mark_point().encode(
+        y=alt.Y('error:N', axis=alt.Axis(orient='right'),title="Has Error"),
+        color=color
+    )
+
+    combined = bars + point | legend
+
     return combined.to_json()
 
 @app.route("/error_span_durations/<traceID>")
@@ -170,66 +182,46 @@ def error_span_durations(traceID):
     if traceWithError.loc[i,'error'] == True:
       error_spans.append(traceWithError.loc[i,'name'])
 
-  #Generate chart with datapoints for span with error
-  error_hist = alt.Chart().mark_bar(color='red').encode(
-      y=alt.Y('count()', axis=alt.Axis(title='Count')),
-      x=alt.X('duration', axis=alt.Axis(title='Span Duration')),
-  ).transform_filter(
-      (alt.datum.error == True)
-  ).transform_filter(
-      (alt.datum.traceId == traceID)
-  )
-
-  #Generate histogram for all data points 
+  #Generate histogram for all data points
   hist = alt.Chart().mark_bar().encode(
-      y=alt.Y('count()', axis=alt.Axis(title='Count')),
+      y=alt.Y('count()', axis=alt.Axis()),
       x=alt.X('duration', axis=alt.Axis(title='Span Duration')),
   ).transform_filter(
       alt.FieldOneOfPredicate(field = 'name', oneOf=error_spans)
   )
 
-  #Layer charts
-  chart = alt.layer(hist, error_hist, data = traces).facet('name:N', columns=2).transform_filter(
-      alt.FieldOneOfPredicate(field = 'name', oneOf=error_spans)
-  ).properties(title="Span Durations with Errors")
-
-  return chart.to_json()
-
-@app.route("/error_span_durations_summary/<traceID>")
-def error_span_durations_summary(traceID):
-  traces = load_traces()
-  traceWithError = traces.loc[traces['traceId'] == traceID]
-  traceWithError = traceWithError.sort_values(by=['traceId','timestamp'],ascending=True).reset_index()
-  traceWithErrorSpans = traceWithError.loc[traceWithError['error'] == True]
-
-  traceWithError["start"] = 0
-  traceWithError["end"] = 0
-
-  spanCount = len(traceWithError)
-  traceWithError.loc[0,'end'] = traceWithError.loc[0,'duration']
-
-  for i in range(1,spanCount):
-    traceWithError.loc[i,'start'] = traceWithError.loc[i,'timestamp'] - traceWithError.loc[0,'timestamp']
-    traceWithError.loc[i,'end'] = traceWithError.loc[i,'start'] + (traceWithError.loc[i,'duration'])
-
-  #Get list of span service names associated with errors
-  error_spans = []
-  for i in range(len(traceWithError)):
-    if traceWithError.loc[i,'error'] == True:
-      error_spans.append(traceWithError.loc[i,'name'])
+ #Generate chart with datapoints for span with error
+  error_hist = alt.Chart().mark_bar(color='red').encode(
+    y=alt.Y('count()', axis=alt.Axis(title='Count of Spans',format=".0f",tickMinStep=1)),
+    x=alt.X('duration', axis=alt.Axis(title='Span Duration')),
+    tooltip=['duration','error']
+  ).interactive().transform_filter(
+    (alt.datum.error == True)
+  ).transform_filter(
+    (alt.datum.traceId == traceID)
+  )
 
   summaries = []
+  charts = []
   for name,duration in zip(traceWithErrorSpans.name,traceWithErrorSpans.duration):
-      subset = traces.loc[traces['name'] == name]
-      statstr = "%.1f" % (stats.percentileofscore(subset['duration'], duration,kind='weak')) 
-      summaries.append(f'{statstr}% of {name} durations are less than the {name} service error.')
+    subset = traces.loc[traces['name'] == name]
+    chart = alt.layer(hist, error_hist, data = subset).properties(title=name + " Span Durations")
+    percentage = ("%.1f" % (100-(stats.percentileofscore(subset['duration'], duration,kind='weak'))))
+    summary = f"{percentage}% of all {name} span durations are greater than the {name} span that errored in Trace ID: {traceID}."
+    summaries.append(summary)
+    chart = alt.layer(hist, error_hist, data = subset).properties(title=summary)
+    charts.append(chart)
 
-  return Response(json.dumps(summaries), mimetype='application/json')
+  #for i in range(len(charts)):
+    #  return charts[0].to_json() |
+  stackCharts = alt.vconcat(*charts)
+  return stackCharts.to_json()
 
 @cache.cached(timeout=3000, key_prefix='load_traces')
 def load_traces():
   traces = pd.read_csv(trace_csv_path)
   return traces
+
 
 if __name__ == "__main__":
   app.run(debug=True)

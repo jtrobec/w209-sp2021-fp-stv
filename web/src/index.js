@@ -14,9 +14,9 @@ const MAX_TRACES_TO_LOAD = 5000;
 
 /**
  * Given an array, group the elements into pairs.
- * 
- * @param {array} arr 
- * @returns an array of arrays of 2 elements, last entry may have only 1 
+ *
+ * @param {array} arr
+ * @returns an array of arrays of 2 elements, last entry may have only 1
  */
 const pairUp = (arr) => {
     return arr.reduce((acc, cur) => {
@@ -31,7 +31,7 @@ const pairUp = (arr) => {
 
 /**
  * Convert a unix, microsecond timestamp into a Date object.
- * @param {long} timestamp 
+ * @param {long} timestamp
  * @returns the timestamp as a Date.
  */
 const dateFromTimestamp = (timestamp) => new Date(timestamp / 1000);
@@ -80,19 +80,19 @@ const traceExplorer = (traceId, traceIds) => {
     const vizCol = crow
         .append('div')
         .attr('class', 'col');
-    
+
     vizCol.append('div')
         .attr('class', 'row')
         .append('div')
         .attr('class', 'col')
         .attr('id', 'trace-chart');
-    
+
     vizCol.append('div')
         .attr('class', 'row')
         .append('div')
         .attr('class', 'col')
         .attr('id', 'trace-tree-chart');
-    
+
     vizCol.append('div')
         .attr('class', 'row')
         .append('div')
@@ -150,23 +150,32 @@ const errorExplorer = (traceName, traces) => {
     const crow = charts
         .append('div')
         .attr('class', 'row');
+    crow.append('h5')
+        .text('Traces with Errors');
+    crow.append('p')
+        .html('Select a <em>trace ID</em> to view all spans within the trace and explore the spans that hit an error.'
+        + 'The list of <em>trace IDs</em> shows you all traces that hit at least one error. Within the histograms, visualize the erroneous spans '
+        + 'from the selected trace within the context of all other span durations for the same service. Scroll over any of the bars in '
+        + 'the charts to get more information about the spans.');
+
 
     const vizCol = crow
         .append('div')
-        .attr('class', 'col');
-    
+        .attr('class', 'col')
+
+
     vizCol.append('div')
         .attr('class', 'row')
         .append('div')
         .attr('class', 'col')
         .attr('id', 'error-chart');
-    
+
     vizCol.append('div')
         .attr('class', 'row')
         .append('div')
         .attr('class', 'col')
         .attr('id', 'error-span-durations-summary');
-    
+
     vizCol.append('div')
         .attr('class', 'row')
         .append('div')
@@ -177,6 +186,9 @@ const errorExplorer = (traceName, traces) => {
         .append('div')
         .attr('class', 'col col-sm')
         .attr('id', 'error-trace-list');
+
+    traceNavCol.append('h6')
+        .text('List of Traces with Errors');
 
     traceNavCol.append('ul')
         .selectAll('li')
@@ -226,14 +238,14 @@ const traceDrillDown = (traceName, traces) => {
             .append('h2')
             .attr('class', 'mb-0')
             .append('button')
-            .attr('class', `btn btn-link ${expanded ? '' : 'collapsed'}`) 
+            .attr('class', `btn btn-link ${expanded ? '' : 'collapsed'}`)
             .attr('type', 'button')
             .attr('data-toggle', "collapse")
             .attr('data-target', `#acc-${name}-div`)
             .text(header);
         return item.append('div')
-            .attr('id', `acc-${name}-div`) 
-            .attr('class', `collapse ${expanded ? 'show' : ''}`) 
+            .attr('id', `acc-${name}-div`)
+            .attr('class', `collapse ${expanded ? 'show' : ''}`)
             .attr('aria-labelledby', `acc-${name}-header`)
             .attr('data-parent', "#explore-accordion")
             .append('div')
@@ -280,9 +292,9 @@ const traceDrillDown = (traceName, traces) => {
         .attr('class', 'row')
         .append('div')
         .attr('class', 'col');
-        
+
     th.traceHeatmap(heatmap, heatleg, histo, traces);
-    
+
     const treeAcc = addAccordionItem('tree', 'Aggregate Trace Tree', false);
     treeAcc.append('div')
            .attr('id', 'trace-tree-chart');
@@ -303,9 +315,9 @@ const dashboard = (traces) => {
 
     let traceRoots = d3.group(traces, t => trace.getSpanName(trace.getRoot(t)));
     let rootCounts = Array.from(traceRoots.entries(), x => ({
-        name: x[0], 
-        count: x[1].length, 
-        traces: x[1], 
+        name: x[0],
+        count: x[1].length,
+        traces: x[1],
         errorTraces: trace.errorTraces(x[1])
     }));
 
@@ -313,9 +325,9 @@ const dashboard = (traces) => {
                             .data(pairUp(rootCounts))
                             .join('div')
                             .attr('class', 'row');
-    
+
     const cols = 2;
-    const traceCol = (row, i, el) => { 
+    const traceCol = (row, i, el) => {
         const r = d3.select(el[i]);
         for (let x = 0; x < cols; x++) {
             const col = r.append('div').attr('class', 'col');
