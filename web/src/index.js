@@ -141,7 +141,7 @@ const updateErrorChart = (traceId) => {
     embed(
         '#error-span-durations',
         `error_span_durations/${traceId}`,
-        {width: 875}
+        {width: 680}
     ).catch(console.error);
     d3.json(`error_span_durations_summary/${traceId}`).then(data => {
         d3.select('#error-span-durations-summary')
