@@ -78,9 +78,9 @@ const traceExplorer = (traceId, traceIds) => {
     crow.append('h5')
         .text('Single Trace Explorer');
     crow.append('p')
-        .html('Two different views of the same trace. The waterview view show the duration of each span, if it errored, and the order of completion for this specific trace. '
+        .html('Two different views of the same trace. The waterfall view shows the duration of each span, if it errored, and the order of completion for this specific trace. '
         + "Meanwhile, the tree view shows the trace's heirarchy. "
-        + 'Both plots feature a tooltip that can be togglded by hovering your cursor over on a bar in the plot. '
+        + 'Both plots feature a tooltip that can be toggled by hovering your cursor over on a bar in the plot. '
         + "Compare similar traces by clicking on the trace ID's below.");
 
     const crow1 = crow
@@ -163,10 +163,9 @@ const errorExplorer = (traceName, traces) => {
     crow.append('h5')
         .text('Traces with Errors');
     crow.append('p')
-        .html('Select a <em>trace ID</em> to view all spans within the trace and explore the spans that hit an error.'
-        + 'The list of <em>trace IDs</em> shows you all traces that hit at least one error. Within the histograms, visualize the erroneous spans '
-        + 'from the selected trace within the context of all other span durations for the same service. Scroll over any of the bars in '
-        + 'the charts to get more information about the spans.');
+        .html('<p>The list of <em>trace IDs</em> shows you all traces that hit at least one error. Select a <em>trace ID</em> to view all spans within the trace and explore the spans that hit an error in the <em>waterfall chart</em>. Scroll over the bars to get more information in the tooltip.</p>'
+        + '<p>In the <em>span duration histograms</em>, visualize the erroneous spans from the selected trace within the context of all other spans for the same service to understand the distribution of durations for the given span.</p>'
+        + '<b>Interactions: </b>Scroll over the bars to get more information in the tooltip. Zoom into the charts by pinching your trackpad or using your mouse scroller. Pan by clicking and dragging inside the charts.');
 
 
     const vizCol = crow

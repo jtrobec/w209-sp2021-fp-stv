@@ -108,6 +108,7 @@ def trace_tree_chart_agg(traceType):
 def error_chart(traceID):
     #Filter to trace with error
     traces = load_traces()
+    traces['error'] = traces['error'].fillna("false")
     traceWithError = traces.loc[traces['traceId'] == traceID]
     traceWithError = traceWithError.sort_values(by=['traceId','timestamp'],ascending=True).reset_index()
     traceWithErrorSpans = traceWithError.loc[traceWithError['error'] == True]
@@ -161,6 +162,7 @@ def error_chart(traceID):
 @app.route("/error_span_durations/<traceID>")
 def error_span_durations(traceID):
   traces = load_traces()
+  traces['error'] = traces['error'].fillna("false")
   traceWithError = traces.loc[traces['traceId'] == traceID]
   traceWithError = traceWithError.sort_values(by=['traceId','timestamp'],ascending=True).reset_index()
   traceWithErrorSpans = traceWithError.loc[traceWithError['error'] == True]
@@ -186,6 +188,8 @@ def error_span_durations(traceID):
   hist = alt.Chart().mark_bar().encode(
       y=alt.Y('count()', axis=alt.Axis()),
       x=alt.X('duration', axis=alt.Axis(title='Span Duration')),
+      tooltip=['duration','error'],
+      color=alt.Color('error',title="Has Error", scale=alt.Scale(range=['#D62728','#1F77B4']))
   ).transform_filter(
       alt.FieldOneOfPredicate(field = 'name', oneOf=error_spans)
   )
@@ -194,7 +198,8 @@ def error_span_durations(traceID):
   error_hist = alt.Chart().mark_bar(color='red').encode(
     y=alt.Y('count()', axis=alt.Axis(title='Count of Spans',format=".0f",tickMinStep=1)),
     x=alt.X('duration', axis=alt.Axis(title='Span Duration')),
-    tooltip=['duration','error']
+    tooltip=['duration','error'],
+    color=alt.Color('traceId',scale=alt.Scale(range=['orange']))
   ).interactive().transform_filter(
     (alt.datum.error == True)
   ).transform_filter(
@@ -205,11 +210,12 @@ def error_span_durations(traceID):
   charts = []
   for name,duration in zip(traceWithErrorSpans.name,traceWithErrorSpans.duration):
     subset = traces.loc[traces['name'] == name]
-    chart = alt.layer(hist, error_hist, data = subset).properties(title=name + " Span Durations")
     percentage = ("%.1f" % (100-(stats.percentileofscore(subset['duration'], duration,kind='weak'))))
+
     summary = f"{percentage}% of all {name} span durations are greater than the {name} span that errored in Trace ID: {traceID}."
     summaries.append(summary)
-    chart = alt.layer(hist, error_hist, data = subset).properties(title=summary)
+
+    chart = alt.layer(hist, error_hist, data = subset).properties(title=summary).resolve_scale(color='independent')
     charts.append(chart)
 
   #for i in range(len(charts)):
