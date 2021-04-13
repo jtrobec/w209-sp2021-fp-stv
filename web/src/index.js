@@ -72,12 +72,22 @@ const updateAggChart = (traceType) => {
 const traceExplorer = (traceId, traceIds) => {
     history.pushState({last: "trace-explorer"}, "Trace Visualization - Trace Explorer", "?te");
     const charts = newUi(`${traceId} Trace Explorer`);
-
     const crow = charts
         .append('div')
         .attr('class', 'row');
+    crow.append('h5')
+        .text('Single Trace Explorer');
+    crow.append('p')
+        .html('Two different views of the same trace. The waterview view show the duration of each span, if it errored, and the order of completion for this specific trace. '
+        + "Meanwhile, the tree view shows the trace's heirarchy. "
+        + 'Both plots feature a tooltip that can be togglded by hovering your cursor over on a bar in the plot. '
+        + "Compare similar traces by clicking on the trace ID's below.");
 
-    const vizCol = crow
+    const crow1 = crow
+        .append('div')
+        .attr('class', 'row');
+
+    const vizCol = crow1
         .append('div')
         .attr('class', 'col');
 
@@ -296,7 +306,17 @@ const traceDrillDown = (traceName, traces) => {
     th.traceHeatmap(heatmap, heatleg, histo, traces);
 
     const treeAcc = addAccordionItem('tree', 'Aggregate Trace Tree', false);
+
     treeAcc.append('div')
+            .attr('class', 'row')
+            .append('div')
+            .attr('class', 'col')
+            .append('h4').text('Aggregate Trace Tree View');
+    treeAcc.append('p')
+            .html("The plot below shows how long each span's duration on average as well as the most common tree fanout for this "
+            + 'trace. Using your mouse you can hover over each bar in the plot to pull up a tooltip with more specific infromation relating to the span. '
+            + 'The bars are shaded to represent the error rate for the specific span.')
+            .append('div')
            .attr('id', 'trace-tree-chart');
     updateAggChart(traceName);
 }
